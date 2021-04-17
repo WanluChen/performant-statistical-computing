@@ -370,9 +370,9 @@ v <- v / sqrt(sum(v^2))
 
 assertion <- ""
 assert(assertion, {
-  approx_deriv <- approx_directional_deriv(compute_internet_ad_ploglik, reg_coef, v)
-  deriv <- compute_internet_ad_grad(reg_coef)
-  are_all_close(deriv, approx_deriv)
+  approx_dderiv <- approx_directional_deriv(compute_internet_ad_ploglik, reg_coef, v)
+  dderiv <- compute_internet_ad_grad(reg_coef) %*% v
+  are_all_close(dderiv, approx_dderiv)
 })
 
 ```
