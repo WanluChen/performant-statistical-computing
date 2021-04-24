@@ -7,6 +7,7 @@ output: html_notebook
 source(file.path("..", "R", "util.R"))
 required_packages <- c('RSpectra')
 install_and_load_packages(required_packages)
+library(testit)
 ```
 
 # Problem 1
@@ -37,16 +38,27 @@ auto_corr <- .9 # Corresponds to `\phi` above
 
 ar_precision_matvec <- function(v, auto_corr) {
   # Fill in
+  n = length(v)
+  
+  v1 = v[1] - auto_corr * v[2]
+  v_ = c(-auto_corr, 1+auto_corr^2, -auto_corr) %*% rbind(v[1:(n-2)], v[2:(n-1)], v[3:n])
+  vn = - auto_corr * v[n-1] + v[n]
+  
+  v = c(v1, v_, vn) / (1 - auto_corr^2)
+  
+  return(v)
 }
 
 ar_eig <- eigs_sym(
   ar_precision_matvec, args = auto_corr,
   # Fill in
+  k = 10,which = 'SM',
   opts = list(
     ncv = 100, # Spectrum distribution of AR-1 process is not very spread out on the extreme ends and is actually a hard case for Lanczos. So it helps to have more Lanczos vectors than the default for faster convergence.
     maxitr = 10^3, # Cap it just in case
     retvec = TRUE # More efficient to do without eigenvectors when not needed
   ),
+  n = ar_length
 )
 ```
 
@@ -54,7 +66,22 @@ Now, directly compute the eigen decomposition of $\boldsymbol{\Sigma}$ (not $\bo
 
 ```{r}
 # Fill in
+# Compute directly
+Sigma = sapply(1:ar_length, function(x) auto_corr^abs(x - 1:ar_length))
+eigen_val = eigen(Sigma)$values[1:10]
+eigen_vec = eigen(Sigma)$vectors[1:10]
+
+# Lancsoz algorithm
+lancos_eigen_val <- sort(1/ar_eig$values, decreasing = TRUE)
+lancos_eigen_vec <- ar_eig$vectors[, order(1/ar_eig$values, decreasing = TRUE)]
+
+# Compare
+assert("The two results are similar.", {
+                are_all_close(lancos_eigen_val, eigen_val)
+                are_all_close(abs(lancos_eigen_vec), abs(eigen_vec), rel_tol = 5e-2)
+})
 ```
+
 
 **Remark:** 
 For banded matrices, there actually are even more efficient approaches.
