@@ -60,6 +60,12 @@ ar_precision_matvec_R <- function(v, auto_corr) {
 
 ```{r}
 # Check the output of your Rcpp function `ar_precision_matvec`
+v <- rnorm(ar_length)
+rcpp.output <- ar_precision_matvec(v, auto_corr)
+r.output <- ar_precision_matvec_R(v, auto_corr) 
+assert("The output of Rcpp function `ar_precision_matvec` is the same as R function:", {
+  are_all_close(rcpp.output, r.output)
+})
 ```
 
 Benchmark performance of the R and Rcpp implementations of `ar_precision_matvec`.
@@ -68,6 +74,9 @@ How much faster is it compared to explicit eigen decomposition of $\boldsymbol{\
 
 ```{r}
 # Comare performences of the R and Rcpp implementation
+suppressMessages(library(bench))
+bench::mark(ar_precision_matvec_R(v, auto_corr))
+bench::mark(ar_precision_matvec(v, auto_corr))
 ```
 
 ```{r, eval=FALSE}
@@ -119,6 +128,11 @@ B <- matrix(rnorm(n_inner * n_col), nrow = n_inner, ncol = n_col)
 
 ```{r}
 # Check the output of `row_col_dot_matmat`
+r.output <- A %*% B
+rcpp.output <- row_col_dot_matmat(A, B)
+assert("The output of Rcpp function `row_col_dot_matmat` is the same as R function:", {
+  are_all_close(r.output, rcpp.output)
+})
 ```
 
 ## Part II: Going one step beyond your linear algebra class
@@ -130,7 +144,9 @@ Then compare performances of `row_col_dot_matmat` and `col_oriented_matmat` (but
 Which one is faster and why?
 
 ```{r}
-# Check and benchmark
+# Comare performences of the R and Rcpp implementation
+bench::mark(row_col_dot_matmat(A, B))
+bench::mark(col_oriented_matmat(A, B))
 ```
 
 Also compare with performance of the matrix-matrix multiplication via `%*%` in R, which uses whatever the BLAS library your R was configured with.
@@ -138,6 +154,7 @@ Also compare with performance of the matrix-matrix multiplication via `%*%` in R
 
 ```{r}
 # Fill in
+bench::mark(A %*% B)
 ```
 
 When benchmarking alternative implementations (or alternative algorithms, more generally), keep in mind that the relative performance depends significantly on the size of a test problem.
@@ -162,4 +179,14 @@ sourceCpp(file.path('src', 'matmat_eigen.cpp'))
 
 ```{r}
 # Check and benchmark
+
+# Check the output of `matmat_via_eigen`
+r.output <- A %*% B
+rcpp.output <- matmat_via_eigen(A, B)
+assert("The output of Rcpp function `matmat_via_eigen` is the same as R function:", {
+  are_all_close(r.output, rcpp.output)
+})
+
+# Comare performences of the R and Rcpp implementation
+bench::mark(matmat_via_eigen(A, B))
 ```

@@ -6,5 +6,5 @@ using Eigen::MatrixXd;
 
 // [[Rcpp::export]]
 MatrixXd matmat_via_eigen(const Map<MatrixXd> A, const Map<MatrixXd> B) {
-  return A * B;
+	return A * B;
 }
